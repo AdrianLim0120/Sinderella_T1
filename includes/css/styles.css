@@ -1,0 +1,275 @@
+/********** header **********/
+header {
+    display: flex;
+    /* justify-content: space-between; */
+    justify-content: center;
+    align-items: center;
+    background-color: #ffffff;
+    padding: 1rem;
+}
+
+.logo img {
+    /* height: 50px; */
+    height: 80px;
+}
+
+/********** menu **********/
+.menu-toggle {
+    color: #ffffff;
+    background-color: #000000;
+    cursor: pointer;
+    font-size: 1.5rem;
+    padding: 0.5rem;
+    border: 2px solid #000000;
+    border-radius: 5%;
+    transition: 0.3s ease-in-out;
+}
+
+.menu-toggle:hover {
+    color: #000000;
+    background-color: #ffffff;
+}
+
+nav {
+    position: fixed;
+    top: 0;
+    right: -250px; /* Hide the menu off-screen initially */
+    width: 250px;
+    height: 100%;
+    background-color: #0c213b; 
+    color: #ffffff;
+    transition: right 0.3s ease-in-out;
+    z-index: 1000; /* Ensure it overlaps other content */
+}
+
+nav.show-menu {  /* Class to show the menu */
+    right: 0;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+nav ul li {
+    margin: 1rem 0;
+}
+
+/* Style for the close button (X) */
+nav ul li h1 {
+    margin: 0 12px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    border: 2px solid transparent;
+    padding: 0.5rem;
+    text-align: center;
+    transition: 0.3s ease-in-out;
+}
+
+nav ul li h1:hover {
+    border-color: #ffffff; 
+    color: #000000; 
+    background-color: #ffffff; 
+}
+
+nav ul li a {
+    color: #000000; 
+    background-color: #ffff00; 
+    text-decoration: none;
+    text-align: center;
+    font-weight: bold;
+    margin:0px 12px;
+    font-size: 1.2rem;
+    padding: 0.5rem;
+    display: block;
+    transition: 0.3s ease-in-out;
+}
+
+nav ul li a:hover {
+    background-color: #001aff; 
+    color: #ffffff;
+}
+
+/********** footer **********/
+footer {
+    display: flex;
+    flex-wrap: wrap;  /* Allow items to wrap to the next line */
+    justify-content: space-between;
+    align-items: flex-start;
+    background-color: #ffffff;
+    color: #000000;
+    padding: 1rem;
+    max-width: 100%;
+    bottom: 0;
+    border-top: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+.footer-left, .footer-right {
+    flex: 1;
+    /* min-width: 200px;  /* Adjust as needed */
+}
+
+.footer-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.footer-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-top: 1rem;  /* Add some space when it wraps */
+}
+
+.footer-logo img {
+    height: 100px;
+    margin-bottom: 1rem;
+    margin: 1rem;
+}
+
+.social-media a img {
+    height: 35px;
+    margin-left: 2rem;
+}
+
+.footer-right img {
+    height: 30px;
+    margin: 0 0.5rem;
+}
+
+footer p {
+    margin: 0.5rem 0;
+}
+
+footer p a {
+    color: #000000;
+}
+
+/* Separator line */
+.separator {
+    width: 100%;
+    height: 1px;
+    background-color: #000000;
+    margin: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/********** main content **********/
+.main_content {
+    text-align: center;
+    font-size: 16px;
+    margin: 0 10% 40px;
+}
+
+.main_content p {
+    text-align: justify;
+}
+
+.main_content img{
+    max-width: 100%;
+    max-height: 500px;
+}
+
+
+/*********** search sinderella **********/
+/* ...existing code... */
+
+.search-sinderella {
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 24px 32px;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    background: #fafcff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    text-align: left;
+    display: block;
+}
+
+.search-sinderella h2 {
+    text-align: center;
+    margin-bottom: 18px;
+    color: #0c213b;
+    font-size: 1.4rem;
+    letter-spacing: 1px;
+}
+
+.search-sinderella label {
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+.search-sinderella input[type="text"] {
+    padding: 7px 10px;
+    margin: 5px 0 10px 0;
+    border: 1px solid #bdbdbd;
+    border-radius: 5px;
+    width: 140px;
+    font-size: 1rem;
+    background: #fff;
+}
+
+.search-sinderella input[readonly] {
+    background: #f3f3f3;
+    /* color: #888; */
+}
+
+.search-sinderella button[type="submit"] {
+    background: #001aff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 22px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.search-sinderella button[type="submit"]:disabled {
+    background: #bdbdbd;
+    cursor: not-allowed;
+}
+
+#search-error-message {
+    display: inline-block;
+    margin-left: 10px;
+    font-size: 0.98em;
+    color: #d32f2f;
+}
+
+#sinderella-result {
+    margin-top: 18px;
+    font-size: 1.08em;
+    min-height: 24px;
+}
+
+.search-btn-center {
+    text-align: center;
+}
+
+/********** login button (ver 2 index) **********/
+#login-buttons a button {
+    background: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 12px 28px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+#login-buttons a button:hover {
+    background: #0056b3;
+}

@@ -1,0 +1,2 @@
+# filepath: /d:/Software/WampServer/www/Sinderella_FYP/.htaccess
+ErrorDocument 404 /Sinderella_FYP/404.php

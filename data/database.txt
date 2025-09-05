@@ -1,0 +1,200 @@
+=========================DONE==============================
+// to store customers' login + personal information
+// the data will be added when a customer register for a new account 
+// (including admin create on behalf)
+customers
+- cust_id (pk) [INT(11)]
+- cust_name [VARCHAR(255)]
+- cust_phno [INT(11)]
+- cust_pwd [VARCHAR(255)]
+- cust_address [TEXT]
+- cust_postcode [INT(5)]
+- cust_area [VARCHAR(100)]
+- cust_state [VARCHAR(100)]
+- cust_status [VARCHAR(20)] // Stores 'active', 'inactive'
+- last_login_date [DATETIME]
+
+=========================DONE==============================
+// to store sinderellas' login + personal information
+// the data will be added when a sinderella register for a new account 
+// (including admin create on behalf)
+sinderellas
+- sind_id (pk) [INT(11)]
+- sind_name [VARCHAR(255)]
+- sind_phno [INT(11)]
+- sind_pwd [VARCHAR(255)]
+- sind_address [TEXT]
+- sind_postcode [INT(5)]
+- sind_area [VARCHAR(100)]
+- sind_state [VARCHAR(100)]
+- sind_icno [VARCHAR(20)]
+- sind_icphoto_path [VARCHAR(255)]
+- sind_profile_path [VARCHAR(255)]
+- sind_upline_id [INT(11)]
+- sind_status [VARCHAR(20)] // Stores 'pending', 'active', 'inactive'
+- last_login_date [DATETIME]
+
+=========================DONE==============================
+// to store all sinderellas' service area
+// the data will be added when sinderella update their service area 
+sind_service_area
+- service_area_id (pk) [INT(11)]
+- sind_id (fk) [INT(11)]
+- area [VARCHAR(100)]
+- state [VARCHAR(100)]
+
+=========================DONE==============================
+// to store sinderella's available time slot
+// the data will be added when sinderella update their available time 
+sind_available_time
+- shcedule_id (pk) [INT(11)]
+- sind_id (fk) [INT(11)]
+- available_date [DATE]
+- available_from [TIME]
+- available_to [TIME]
+
+// to store sinderella's downline
+// the data will be added when sinderella add their downline's phone number
+// the dwln_id will be added only if a new sinderella register with the added phno 
+sind_downline
+- sind_id (pk) (fk) [INT(11)]
+- dwln_phno [INT(11)]
+- dwln_id [INT(11)]
+
+=========================DONE==============================
+// to store admins' login + personal informartion
+// the data will be added when a current admin create a new admin account 
+admins
+- adm_id (pk) [INT(11)]
+- adm_name [VARCHAR(255)]
+- adm_role [VARCHAR(100)] // Stores 'Junior Admin', 'Senior Admin'
+- adm_phno [INT(11)]
+- adm_pwd [VARCHAR(255)]
+- last_login_date [DATETIME]
+
+=========================DONE==============================
+// to store questions, options and correct answer for qualifier test
+qualifier_test
+- question_id (pk) [INT(11)]
+- question_text [TEXT]
+- f_option0 [TEXT] // stores the correct option
+- f_option1 [TEXT] // stores the false option
+- f_option2 [TEXT] // stores the false option
+- f_option3 [TEXT] // stores the false option
+
+=========================DONE==============================
+// to store qualifier test attempt history 
+// the data will be added for sinderellas' every attempts
+qt_attempt_hist
+- attempt_id (pk) [INT(10)]
+- sind_id (fk) [INT(11)]
+- attempt_date [DATETIME]
+- attempt_score [INT(10)]
+
+=========================DONE==============================
+// to store all bookings details
+bookings
+- booking_id (pk) [INT(11)]
+- cust_id (fk) [INT(11)]
+- sind_id (fk) [INT(11)]
+- booking_date [DATETIME]
+- service_id (fk) [INT(11)]
+- booked_at [DATETIME]
+- booking_status [VARCHAR(20)]  // Stores 'pending', 'confirm', 'done', 'rated', 'cancelled by admin', 'cancelled by customer'
+
+=========================DONE==============================
+// to store multiple addon in a single booking
+booking_addons
+- booking_addon_id (pk) [INT(11)]
+- booking_id (fk) [INT(11)] 
+- ao_id (fk) [INT(11)] 
+
+// to store booking check-in and check-out 
+booking_check_in_out
+- booking_id (pk) (fk) [INT(11)]
+- checkin_time [DATETIME]
+- checkin_photopath [VARCHAR(255)]
+- checkout_time [DATETIME]
+- checkout_photopath [VARCHAR(255)]
+
+// to store rating for all bookings
+booking_rating
+- booking id (pk)(fk) [INT(11)]
+- rating [INT(1)] // Stores 1-5
+
+=========================DONE==============================
+// to store services available
+services
+- service_id (pk) [INT(11)]
+- service_name [VARCHAR(255)]
+- service_price [DECIMAL(10, 2)]
+- service_status [VARCHAR(20)]  // Stores 'active', 'inactive'
+
+// to store add-on and pricing
+addon
+- ao_id (pk) [INT(11)]
+- service_id (fk) [INT(11)]
+- ao_desc [VARCHAR(255)]
+- ao_price [DECIMAL(10, 2)]
+
+// to store pricing for each service and breakdown
+pricing
+- service_id (pk)(fk) [INT(11)]
+- ao_id (pk)(fk) [INT(11)]
+- service_price [DECIMAL(10, 2)]
+- pr_sind [DECIMAL(10, 2)]
+- pr_lvl1 [DECIMAL(10, 2)]
+- pr_lvl2 [DECIMAL(10, 2)]
+- pr_lvl3 [DECIMAL(10, 2)]
+- pr_lvl4 [DECIMAL(10, 2)]
+- pr_br_basic [DECIMAL(10, 2)]
+- pr_br_rate [DECIMAL(10, 2)]
+- pr_br_perf [DECIMAL(10, 2)]
+
+=========================DONE==============================
+// to store verification codes requested by user 
+verification_code
+- code_id (pk) [INT(11)]
+- user_phno [INT(11)]
+- ver_code [INT(11)]
+- created_at [DATETIME]
+- expires_at [DATETIME]
+- used [BOOLEAN]
+
+
+=========================DONE==============================
+// to store customer's label
+cust_label
+- clbl_id (pk) [INT(11)]
+- clbl_name [VARCHAR(255)]
+- clbl_color_code [VARCHAR(100)]
+- clbl_status [VARCHAR(100)] // Stores 'Active', 'Inactive'
+
+=========================DONE==============================
+// to store sinderella's label
+sind_label
+- slbl_id (pk) [INT(11)]
+- slbl_name [VARCHAR(255)]
+- slbl_color_code [VARCHAR(100)]
+- slbl_status [VARCHAR(100)] // Stores 'Active', 'Inactive'
+
+===============================================================
+===============================================================
+===============================================================
+
+FURTHER UPDATE
+git add .
+git commit -m "Updated files"
+git push origin main
+
+TO CLONE TO ANOTHER COMPUTER
+git clone https://github.com/yourusername/repositoryname.git
+
+https://kokyang27.github.io/Sinderella/
+
+===============================================================
+===============================================================
+===============================================================
+
+POSTCODE FETCH FROM: 
+https://github.com/AsyrafHussin/malaysia-postcodes/blob/main/all.json 

@@ -1,0 +1,269 @@
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+.container {
+    width: 80%;
+    margin: 0 auto;
+}
+
+/* Header Styles */
+.header {
+    background-color: #ffffff;
+    color: #0c213b;
+    padding: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    width: calc(100% - 200px); /* Adjust based on the width of the menu */
+    top: 0;
+    right: 0;
+    z-index: 1000;
+    transition: width 0.3s;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+.header-left h2 {
+    margin: 0;
+    padding-left: 60px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    padding-right: 20px;
+}
+
+.header-right p {
+    margin: 0;
+    margin-right: 20px;
+}
+
+.header-right a img {
+    width: 24px;
+    height: 24px;
+}
+
+/* Menu Styles */
+.menu {
+    background-color: #0c213b;
+    color: #fff;
+    padding: 10px 0;
+    width: 200px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+    transform: translateX(0);
+}
+
+.menu h3 {
+    margin: 0;
+    padding-left: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+}
+
+.menu ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu ul li {
+    padding: 10px 20px;
+}
+
+.menu ul li a {
+    color: #fff;
+    text-decoration: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.menu ul li a:hover {
+    background-color: #001aff;
+}
+
+.menu ul li ul {
+    display: none;
+    background-color: #0c213b;
+}
+
+.menu ul li ul li {
+    padding: 10px 40px;
+}
+
+/* Main Container Styles */
+.main-container {
+    display: flex;
+    margin-left: 200px; /* Adjust based on the width of the menu */
+    padding-top: 50px; /* Adjust to avoid covering the header */
+    transition: margin-left 0.3s;
+}
+
+.main-container a {
+    color: #0000EE;
+}
+
+/* Content Container Styles */
+.content-container {
+    flex-grow: 1;
+    padding: 20px;
+}
+
+/* Profile Container Styles */
+.profile-container {
+    background-color: #fff;
+    padding: 20px;
+    /* margin-top: 20px; */
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.profile-container h2 {
+    margin-top: 0;
+}
+
+.profile-container p {
+    margin: 10px 0;
+}
+
+.profile-container button {
+    display: inline-block;
+    padding: 10px 20px;
+    margin-top: 10px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.profile-container button:hover {
+    background-color: #0056b3;
+}
+
+/* Close Menu Styles */
+.close-menu {
+    background-color: #ffffff;
+    color: #0c213b;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    border-bottom: 1px solid #ccc;
+}
+
+/* Floating Toggle Icon */
+.floating-toggle {
+    position: fixed;
+    top: 4px;
+    left: 210px;
+    background-color: #0c213b;
+    color: #fff;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 1001;
+    transition: left 0.3s;
+    /* margin-top: 35px; */
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    .menu {
+        transform: translateX(-100%);
+    }
+
+    .main-container {
+        margin-left: 0;
+    }
+
+    .header {
+        width: 100%;
+        right: 0;
+    }
+
+    .header-left h2 {
+        padding-left: 10px;
+    }
+
+    .header-left h2 {
+        display: inline;
+    }
+}
+
+.profile-container .delete-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: red;
+    color: white;
+    border: none;
+    /* border-radius: 25%; */
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+    margin-top: 0;
+}
+.profile-container .delete-button:hover {
+    background-color: darkred;
+}
+
+em {
+    font-style: italic;
+    color: #666;
+}
+
+.profile-container .tab-btn {
+    padding: 10px 28px;
+    margin-top: 0;
+    background: #e0e0e0;
+    color: #333;
+    border-radius: 8px 8px 0 0;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.profile-container .tab-btn.active {
+    background: #1976d2;
+    color: #fff;
+    font-weight: bold;
+}
+
+.profile-container .tab-btn:not(.active):hover {
+    background: #d0d0d0;
+}
+
+#approve-btn {
+    background: #28a745;
+}
+#approve-btn:hover {
+    background: #218838;
+}
+#reject-btn {
+    background: #dc3545;
+}
+#reject-btn:hover {
+    background: #b52a37;
+}

@@ -1,0 +1,76 @@
+to be done: 
+
+[done] - check + duplicate/insert to sind_available_time when bookings become 'confirm'
+         to avoid changes of schedule 
+
+[done] - add more details especially for payment distribution to the bookigs table. 
+[done] -- retrieve the booking price from updated bookings table so that dont need to
+          calculate every time + problem of changing price. 
+
+[done] when not direct add booking + payment 
+       (means from pending to proceed payment)
+       check sinderella availability again. 
+       if the sinderella taken for that date + time, 
+       or sinderella no longer available, 
+       dont allow user to continue proceed "pay now". 
+       change the status to cancel. 
+       *add remark (system auto-generate)
+
+
+## 
+
+1. Sinderella Manage Booking
+- Enhanced function to avoid Sinderella to change time for booked time slot. 
+
+2. Customer Booking
+- Enhanced booking process and details calculation. 
+
+3. Admin Edit Admin Page
+- Bug fixed: now the admin's details can be retrived correctly. 
+
+*****************************************************************************
+*****************************************************************************
+
+## 15 June 2025 update
+
+1. Sinderella Upline
+- Added upline selection when sign up. 
+- Added upline name @ manage profile page.
+- Allowed admin to change upline @ manage Sinderella page.
+
+2. Customer Add Booking
+- Added rule: Customer is only allowed to select booking date from today to last day of next month only.
+- Added payment gateway, not able to test @ localhost (FOR TESTING PURPOSE ONLY). 
+- *Update SQL bookings table booking_date column from DATETIME TO DATE. 
+- Bug fixed when retrieving sinderella. 
+- Added "Your previous Sinderella" to let user know which Sinderell serve them before. 
+
+3. Updated DB Connection
+- Files need to take note when changing environment: 
+-- db_connect.php
+-- process_booking.php
+
+4. Sinderella Manage Schedule
+- Change to another background color if there's confirm booking & for past date. 
+- Added function dont allow user to change the time slot which was booked by cust. 
+- Added function dont allow user to change the time slot which past. 
+
+*****************************************************************************
+*****************************************************************************
+
+## 05 June 2025 update
+
+1. Sinderella Manage Schedule
+- Restrict input times to between 8am to 2pm only.
+- Ensure atleast 4 hours between the two selected times. 
+- *Added events @ database to clear schedule (date) 2 months before. 
+
+2. Home Page
+- Added search Sinderella function.
+
+3. Sinderella Manage Downline
+- Changed the success message to green color.
+- Added "Created At" column.
+
+4. Database
+- Added "Created At" column @ sind_downline table. 
