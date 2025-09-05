@@ -1,5 +1,5 @@
 <?php
-// http://localhost/wa_test/send_reminder_for_booking.php?booking_id=17
+// http://127.0.0.1/Sinderella_FYP/wa_test/send_reminder_for_booking.php?booking_id=17
 require_once __DIR__.'/../includes/whatsapp/client.php';
 require_once __DIR__.'/../includes/whatsapp/helpers.php';
 
