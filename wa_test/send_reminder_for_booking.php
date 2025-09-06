@@ -1,17 +1,14 @@
 <?php
 // http://127.0.0.1/Sinderella_FYP/wa_test/send_reminder_for_booking.php?booking_id=17
-require_once __DIR__.'/../includes/whatsapp/client.php';
-require_once __DIR__.'/../includes/whatsapp/helpers.php';
+require_once __DIR__ . '/../db_connect.php';
+require_once __DIR__ . '/../includes/whatsapp/client.php';
+require_once __DIR__ . '/../includes/whatsapp/helpers.php';
 
-// Use your existing DB bootstrap if you have it:
-// require_once __DIR__.'/../db_connect.php';  // and build with $conn (mysqli)
-// Below is a simple PDO connection for testing:
-$pdo = new PDO('mysql:host=127.0.0.1;dbname=sinderella_db;charset=utf8mb4','root','',[
-  PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC
-]);
-
-$bookingId = (int)($_GET['booking_id'] ?? 0);
-if (!$bookingId) { echo "Usage: ?booking_id=17"; exit; }
+$bookingId = (int) ($_GET['booking_id'] ?? 0);
+if (!$bookingId) {
+  echo "Usage: ?booking_id=17";
+  exit;
+}
 
 $sql = "
 SELECT
@@ -21,12 +18,18 @@ SELECT
 FROM bookings b
 JOIN sinderellas si ON si.sind_id     = b.sind_id
 JOIN customers c    ON c.cust_id      = b.cust_id
-WHERE b.booking_id = :id
+WHERE b.booking_id = ?
 ";
-$stmt = $pdo->prepare($sql);
-$stmt->execute([':id'=>$bookingId]);
-$bk = $stmt->fetch();
-if (!$bk) { echo "Booking not found"; exit; }
+$stmt = $conn->prepare($sql);
+$stmt->bind_param('i', $bookingId);
+$stmt->execute();
+$bk = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+
+if (!$bk) {
+  echo "Booking not found.";
+  exit;
+}
 
 // Build the 8 template variables in the exact order shown above
 $params = [
@@ -40,14 +43,17 @@ $params = [
 ];
 
 // Who to send
-$toCustomer   = phone_to_e164($bk['cust_phno']);
+$toCustomer = phone_to_e164($bk['cust_phno']);
 $toSinderella = phone_to_e164($bk['sind_phno']);
-$toAdmin      = ADMIN_PHONE_E164 ?: null;
+$toAdmin = ADMIN_PHONE_E164 ?: null;
 
 $sent = [];
-if ($toCustomer)   $sent['customer']   = wa_send_template($toCustomer, WA_TEMPLATE_BOOKING_REMINDER, 'en_US', $params);
-if ($toSinderella) $sent['sinderella'] = wa_send_template($toSinderella, WA_TEMPLATE_BOOKING_REMINDER, 'en_US', $params);
-if ($toAdmin)      $sent['admin']      = wa_send_template($toAdmin, WA_TEMPLATE_BOOKING_REMINDER, 'en_US', $params);
+if ($toCustomer)
+  $sent['customer'] = wa_send_template($toCustomer, WA_TEMPLATE_BOOKING_REMINDER, 'en', $params);
+if ($toSinderella)
+  $sent['sinderella'] = wa_send_template($toSinderella, WA_TEMPLATE_BOOKING_REMINDER, 'en', $params);
+if ($toAdmin)
+  $sent['admin'] = wa_send_template($toAdmin, WA_TEMPLATE_BOOKING_REMINDER, 'en', $params);
 
 header('Content-Type: application/json');
-echo json_encode(['booking'=>$bookingId, 'params'=>$params, 'results'=>$sent], JSON_PRETTY_PRINT);
+echo json_encode(['booking' => $bookingId, 'params' => $params, 'results' => $sent], JSON_PRETTY_PRINT);

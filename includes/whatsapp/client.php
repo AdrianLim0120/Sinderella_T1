@@ -24,7 +24,7 @@ function wa_post(array $payload): array {
   return $json ?: ['raw'=>$res];
 }
 
-function wa_send_template(string $to, string $template, string $lang='en_US', array $bodyParams=[]): array {
+function wa_send_template(string $to, string $template, string $lang='en', array $bodyParams=[]): array {
   $components = [];
   if ($bodyParams) {
     $components[] = [
@@ -43,3 +43,4 @@ function wa_send_template(string $to, string $template, string $lang='en_US', ar
     ]
   ]);
 }
+?>
