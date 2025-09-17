@@ -21,7 +21,7 @@
                 <input type="text" id="phone" name="phone" placeholder="Exp: 0123456789" required
                         value="<?php echo htmlspecialchars($_POST['phone'] ?? '') ?>">
 
-                <button type="button" id="getCodeButton">Get Code</button>
+                <button type="button" id="getCodeButton">Send code via WhatsApp</button>
                 <label for="verification_code">Verification Code:</label>
                 <input type="text" id="verification_code" name="verification_code" required
                         value="<?php echo htmlspecialchars($_POST['verification_code'] ?? '') ?>">
@@ -85,30 +85,25 @@
             exit();
         }
 
-        // Check if verification code is valid
-        $stmt = $conn->prepare("SELECT ver_code FROM verification_codes WHERE user_phno = ? AND ver_code = ? AND expires_at > NOW() AND used = 0");
-        if (!$stmt) {
-            echo "<script>document.getElementById('error-message').innerText = 'Database error: " . $conn->error . "';</script>";
-            exit();
-        }
+        // Check verification code (valid, not used)
+        $stmt = $conn->prepare("
+        SELECT ver_code 
+        FROM verification_codes 
+        WHERE user_phno = ? AND ver_code = ? AND used = 0 AND expires_at > NOW()
+        ORDER BY created_at DESC LIMIT 1
+        ");
         $stmt->bind_param("si", $phone, $verification_code);
         $stmt->execute();
         $stmt->store_result();
-
         if ($stmt->num_rows == 0) {
             echo "<script>document.getElementById('error-message').innerText = 'Invalid or expired verification code.';</script>";
             $stmt->close();
-            // $conn->close();
             exit();
         }
-
-        // Mark verification code as used
         $stmt->close();
-        $stmt = $conn->prepare("UPDATE verification_codes SET used = 1 WHERE user_phno = ? AND ver_code = ?");
-        if (!$stmt) {
-            echo "<script>document.getElementById('error-message').innerText = 'Database error: " . $conn->error . "';</script>";
-            exit();
-        }
+
+        // Mark code as used (best-effort)
+        $stmt = $conn->prepare("UPDATE verification_codes SET used = 1 WHERE user_phno = ? AND ver_code = ? LIMIT 1");
         $stmt->bind_param("si", $phone, $verification_code);
         $stmt->execute();
         $stmt->close();

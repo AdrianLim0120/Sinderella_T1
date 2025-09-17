@@ -61,7 +61,7 @@ $services_result = $conn->query($services_query);
     </div>
 
     <div class="sinderella-container">
-        <h3 id="sinderellaTitle_<?php echo $block; ?>">Available Sinderellas</h3>
+        <h3 id="sinderellaTitle_<?php echo $block; ?>" style="color:red;">Please select address and date.</h3>
         <div id="sinderellaList_<?php echo $block; ?>">
             <!-- Sinderellas will be loaded by JS -->
         </div>

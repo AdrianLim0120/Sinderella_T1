@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_upline'])) {
             }
 
             // Proceed to next page (e.g., identity verification)
-            header("Location: address_info.php?phone=$phone");
+            header("Location: personal_info.php?phone=$phone");
             exit();
         } else {
             $error_message = "Failed to update upline. Please try again.";

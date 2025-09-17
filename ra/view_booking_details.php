@@ -739,6 +739,13 @@ if ($booking_type == 'r') {
             input.value = '<?php echo $booking_id; ?>';
             form.appendChild(input);
 
+            // Add cust_address_id
+            var addrInput = document.createElement('input');
+            addrInput.type = 'hidden';
+            addrInput.name = 'cust_address_id';
+            addrInput.value = '<?php echo $cust_address_id; ?>';
+            form.appendChild(addrInput);
+
             // Add editable fields
             var fields = {
                 booking_date: '<?php echo htmlspecialchars($booking_date, ENT_QUOTES); ?>',

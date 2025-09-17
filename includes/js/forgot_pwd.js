@@ -1,39 +1,61 @@
-document.getElementById('getCodeButton').addEventListener('click', function() {
-    let phone = document.getElementById('phone').value;
-    const errorMessage = document.getElementById('error-message');
+// /includes/js/forgot_pwd.js
+(function () {
+  const btn   = document.getElementById('getCodeButton');
+  const phone = document.getElementById('phone');
+  const errEl = document.getElementById('error-message');
 
-    // Clear previous error message
-    errorMessage.innerText = '';
+  function setError(msg) {
+    if (errEl) errEl.textContent = msg || '';
+  }
 
-    // Sanitize phone number: remove spaces and symbols
-    phone = phone.replace(/[\s-]/g, '');
+  async function postForm(url, data) {
+    const body = new URLSearchParams(data);
+    const res  = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+      body
+    });
+    return res.json();
+  }
 
-    // Validate phone number
-    if (!/^\d+$/.test(phone)) {
-        errorMessage.innerText = 'Phone number must be numeric only.';
-        return;
-    }
+  function startCooldown(seconds) {
+    let left = seconds;
+    btn.disabled = true;
+    const orig = btn.textContent;
+    const timer = setInterval(() => {
+      btn.textContent = `Get Code (${left}s)`;
+      left -= 1;
+      if (left <= 0) {
+        clearInterval(timer);
+        btn.disabled = false;
+        btn.textContent = orig;
+      }
+    }, 1000);
+  }
 
-    // Send AJAX request to check if user exists and get verification code
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '../request_otp.php', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.onload = function() {
-        if (xhr.status === 200) {
-            if (xhr.responseText.startsWith('Failed') || xhr.responseText.startsWith('User does not exist')) {
-                errorMessage.innerText = xhr.responseText;
-            } else {
-                alert('Verification code: ' + xhr.responseText); // Alert the OTP for testing purposes
-            }
-        } else {
-            errorMessage.innerText = 'Failed to send verification code. Please try again.';
+  btn?.addEventListener('click', async () => {
+    setError('');
+    const ph = (phone?.value || '').trim();
+    if (!ph) { setError('Please enter your phone number first.'); return; }
+
+    try {
+      const res = await postForm('../request_otp.php', { phone: ph });
+      if (res.ok) {
+        alert('OTP has been sent to your WhatsApp. It expires in ' + (res.ttl_min || 5) + ' minutes.');
+        startCooldown(60); // must match OTP_RATE_LIMIT_SECONDS
+      } else {
+        setError(res.error || 'Failed to send OTP.');
+        if (res.details && res.details.response && res.details.response.error && res.details.response.error.message) {
+          // helpful API error from Meta (optional to display)
+          console.warn('WhatsApp API:', res.details.response.error.message);
         }
-    };
-    xhr.onerror = function() {
-        errorMessage.innerText = 'Request error. Please try again.';
-    };
-    xhr.send('phone=' + phone);
-});
+      }
+    } catch (e) {
+      setError('Network error. Please try again.');
+      console.error(e);
+    }
+  });
+})();
 
 function toggleAllPasswords() {
     var show = document.getElementById('showPasswordAll').checked;

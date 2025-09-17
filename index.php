@@ -1,7 +1,3 @@
-<?php
-require __DIR__ . '/includes/pseudocron.php';
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>

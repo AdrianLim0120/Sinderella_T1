@@ -22,7 +22,7 @@
                 <input type="text" id="phone" name="phone" placeholder="Exp: 0123456789" required
                         value="<?php echo htmlspecialchars($_POST['phone'] ?? '') ?>">
 
-                <button type="button" id="getCodeButton">Get Code</button>
+                <button type="button" id="getCodeButton">Send code via WhatsApp</button>
                 <label for="verification_code">Verification Code:</label>
                 <input type="text" id="verification_code" name="verification_code" required
                         value="<?php echo htmlspecialchars($_POST['verification_code'] ?? '') ?>">

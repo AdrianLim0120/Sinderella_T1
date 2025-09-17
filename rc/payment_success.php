@@ -1,11 +1,14 @@
 <?php
+// /rc/payment_success.php
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+date_default_timezone_set('Asia/Kuala_Lumpur');
+
 if (isset($_GET['status_id']) && isset($_GET['order_id'])) {
     $status = (int)$_GET['status_id']; // 1 = success
-    $orderRaw = trim((string)$_GET['order_id']); 
+    $orderRaw = trim((string)$_GET['order_id']);
 
     $parts = preg_split('/[-,]/', $orderRaw);
     $bookingIds = [];
@@ -22,10 +25,12 @@ if (isset($_GET['status_id']) && isset($_GET['order_id'])) {
         exit;
     }
 
-    require_once '../db_connect.php'; 
+    require_once '../db_connect.php';
+    require_once '../config/whatsapp.php';
+    require_once '../cron/lib/wa.php';
 
     if ($status === 1) {
-        // --- First pass per booking: mark payment row + ensure available_time
+        // --- First pass per booking: mark payment row + ensure available_time (your original) ---
         foreach ($bookingIds as $booking_id) {
             // booking_payments -> confirmed
             if ($stmt = $conn->prepare("UPDATE booking_payments SET payment_status='confirmed' WHERE booking_id = ?")) {
@@ -42,7 +47,7 @@ if (isset($_GET['status_id']) && isset($_GET['order_id'])) {
             if ($bookingRes->fetch()) {
                 $bookingRes->close();
 
-                $day_of_week = date('l', strtotime($booking_date)); 
+                $day_of_week = date('l', strtotime($booking_date));
 
                 // Check exists
                 $checkRes = $conn->prepare("SELECT schedule_id FROM sind_available_time WHERE sind_id = ? AND available_date = ? LIMIT 1");
@@ -62,7 +67,6 @@ if (isset($_GET['status_id']) && isset($_GET['order_id'])) {
                     $dayRes->close();
 
                     if ($hasDay) {
-                        // Convert '00:00:00' to NULL as in your original
                         $from1 = ($af1 && $af1 !== '00:00:00') ? "'{$af1}'" : "NULL";
                         $from2 = ($af2 && $af2 !== '00:00:00') ? "'{$af2}'" : "NULL";
                         $conn->query("INSERT INTO sind_available_time (sind_id, available_date, available_from1, available_from2)
@@ -75,28 +79,37 @@ if (isset($_GET['status_id']) && isset($_GET['order_id'])) {
         }
 
         // ========= PAYMENT RECEIVED HANDLER (now loops over all bookings) =========
+        $messages = []; // queue messages: one per booking (send after COMMIT)
+        $maidMsgs     = [];   // <-- NEW: ask Sinderella to accept/reject
+
         $conn->begin_transaction();
 
         try {
             foreach ($bookingIds as $booking_id) {
-                // 1) Lock & read booking essentials
                 $stmt = $conn->prepare("
-                    SELECT b.booking_status, b.booking_type, b.service_id, b.sind_id
+                    SELECT b.booking_status, b.booking_type, b.service_id, b.sind_id,
+                        b.booking_date, b.booking_from_time, b.booking_to_time,
+                        b.full_address,
+                        c.cust_name, c.cust_phno,
+                        s.sind_phno
                     FROM bookings b
+                    JOIN customers   c ON c.cust_id = b.cust_id
+                    JOIN sinderellas s ON s.sind_id = b.sind_id
                     WHERE b.booking_id = ?
                     FOR UPDATE
                 ");
                 $stmt->bind_param("i", $booking_id);
                 $stmt->execute();
-                $stmt->bind_result($b_status_now, $b_type, $b_service_id, $maid_sind_id);
-                if (!$stmt->fetch()) {
-                    $stmt->close();
-                    throw new Exception('Booking not found (ID: '.$booking_id.')');
-                }
+                $stmt->bind_result($b_status_now, $b_type, $b_service_id, $maid_sind_id,
+                                $b_date, $b_from_time, $b_to_time,
+                                $b_full_addr,
+                                $cust_name, $cust_phno,
+                                $sind_phno);
+                if (!$stmt->fetch()) { $stmt->close(); throw new Exception('Booking not found (ID: '.$booking_id.')'); }
                 $stmt->close();
 
-                // Already paid? skip this ID but keep processing others
                 if (strtolower((string)$b_status_now) === 'paid') {
+                    // already processed earlier -> skip computation & sending
                     continue;
                 }
 
@@ -194,7 +207,6 @@ if (isset($_GET['status_id']) && isset($_GET['order_id'])) {
                         bp_lvl2_amount   = ?
                     WHERE booking_id = ?
                 ");
-                // allow NULLs for *_sind_id and *_amount
                 $stmt->bind_param(
                     "dddididi",
                     $bp_total,
@@ -212,7 +224,27 @@ if (isset($_GET['status_id']) && isset($_GET['order_id'])) {
                 if (!$ok) {
                     throw new Exception('Failed to update booking '.$booking_id);
                 }
-            } 
+
+                // Queue WhatsApp message (send after COMMIT)
+                $messages[] = [
+                    'send_to'    => $cust_phno,
+                    'amt'   => $bp_total,
+                    'date'  => $b_date,
+                    'from'  => $b_from_time,
+                    'to'    => $b_to_time,
+                ];
+
+                $when = sprintf('%s (%s - %s)', $b_date, substr($b_from_time,0,5), substr($b_to_time,0,5));
+                $maidMsgs[] = [
+                    'to'   => $sind_phno,
+                    'when' => $when,
+                    'cust_name'  => $cust_name,
+                    'cust_phone' => $cust_phno,
+                    'address'    => $b_full_addr,
+                    'booking_id' => $booking_id,
+                    'sind_id'    => $maid_sind_id,
+                ];
+            }
 
             $conn->commit();
 
@@ -223,6 +255,38 @@ if (isset($_GET['status_id']) && isset($_GET['order_id'])) {
                 window.location.href = 'my_booking.php?search_date=&search_status=pending';
             </script>";
             exit;
+        }
+
+        // -------- Send WhatsApp confirmations (outside the transaction) --------
+        foreach ($messages as $m) {
+            $recipient = format_msisdn($m['send_to']);
+            if (!$recipient) continue; // skip bad numbers
+
+            $resp = wa_send_payment_confirmation($recipient, $m['amt'], $m['date'], $m['from'], $m['to']);
+            // (optional) you could log failures here:
+            // error_log("WA payment msg to {$recipient}: " . json_encode($resp));
+            usleep(WHATSAPP_SEND_DELAY_US);
+        }
+
+        // Send decision template to each Sinderella and store mapping
+        foreach ($maidMsgs as $m) {
+            $to = format_msisdn($m['to']); if (!$to) continue;
+
+            $resp = wa_send_booking_decision($to, $m['when'], $m['cust_name'], $m['cust_phone'], $m['address'], (int)$m['booking_id']);
+
+            $body = json_decode($resp['response'] ?? '', true);
+            if (isset($body['messages'][0]['id'])) {
+                $waId = $body['messages'][0]['id'];
+                $ins = $conn->prepare("
+                    INSERT IGNORE INTO wa_outbound_map
+                    (wa_message_id, booking_id, sind_id, kind, decision, processed_at)
+                    VALUES (?, ?, ?, 'booking_decision', NULL, NULL)
+                ");
+                $ins->bind_param('sii', $waId, $m['booking_id'], $m['sind_id']);
+                $ins->execute();
+                $ins->close();
+            }
+            usleep(WHATSAPP_SEND_DELAY_US);
         }
 
         echo "<script>

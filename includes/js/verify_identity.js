@@ -3,14 +3,17 @@ document.getElementById('verifyIdentityForm').addEventListener('submit', functio
     const icPhoto = document.getElementById('ic_photo').files[0];
     const profilePhoto = document.getElementById('profile_photo').files[0];
     const errorMessage = document.getElementById('error-message');
+    const idType = document.getElementById('id_type').value;
 
     // Clear previous error message
     errorMessage.innerText = '';
 
-    // Validate IC number and auto-fill fields
-    if (!validateAndFillIC(icNumber)) {
-        event.preventDefault();
-        return;
+    if (idType === 'NI') {
+        // Validate IC number and auto-fill fields
+        if (!validateAndFillIC(icNumber)) {
+            event.preventDefault();
+            return;
+        }
     }
 
     // Validate IC photo is an image
@@ -28,12 +31,12 @@ document.getElementById('verifyIdentityForm').addEventListener('submit', functio
     }
 });
 
-document.getElementById('ic_number').addEventListener('input', function() {
-    validateAndFillIC(this.value);
-});
+// document.getElementById('ic_number').addEventListener('input', function() {
+//     validateAndFillIC(this.value);
+// });
 
 function validateAndFillIC(icNumber) {
-    const errorMessage = document.getElementById('error-message');
+    const errorMessage = document.getElementById('ic-error-message');
     const dobInput = document.getElementById('dob');
     const ageInput = document.getElementById('age');
     const genderInput = document.getElementById('gender');

@@ -130,6 +130,26 @@ require_once '../db_connect.php';
             text-align: right;
             font-size: 16px;
         }
+
+                .export-btn {
+            display: flex;
+            margin-left: auto; 
+        }
+
+        .btn-export {
+            background-color: #76e790ff;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: 1px solid #28a745;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-export:hover {
+            background-color: #2bb148ff; 
+            border-color: #1e7e34;
+        }
     </style>
 </head>
 
@@ -148,6 +168,10 @@ require_once '../db_connect.php';
                             title="Older (previous month)"><strong>&lt;</strong></button>
                         <div id="rangeText">Loading…</div>
                         <button id="btnNext" class="btn-nav" title="Newer (next month)"><strong>&gt;</strong></button>
+                    </div>
+
+                    <div class="export-btn">
+                        <button id="btnExport" class="btn-export">Generate Excel</button>
                     </div>
                 </div>
 
@@ -264,6 +288,11 @@ require_once '../db_connect.php';
 
             $btnPrev.on('click', function () { monthOffset--; loadMonth(); });
             $btnNext.on('click', function () { if (monthOffset < maxOffset) { monthOffset++; loadMonth(); } });
+
+            $('#btnExport').on('click', function () {
+                var url = window.location = '../pdf_report/export_group_commission.php?month_offset=' + encodeURIComponent(monthOffset);
+                window.open(url);
+            });
 
             loadMonth();
         })(jQuery);

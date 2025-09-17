@@ -447,7 +447,8 @@ if ($b_cust_id && $cust_address_id) {
 
                 <br>
                 <!-- <button type="button" onclick="window.location.href='view_bookings.php?search_date=&search_area=&search_status=<?php echo urlencode($booking_status); ?>'">Back</button> -->
-                <button type="button" onclick="window.location.href='view_bookings.php'">Back</button>
+                <!-- <button type="button" onclick="window.location.href='view_bookings.php'">Back</button> -->
+                <button type="button" onclick="window.history.back()">Back</button>
                 </div>
 
                 <?php if ($booking_status == 'done' || $booking_status == 'rated'): ?>

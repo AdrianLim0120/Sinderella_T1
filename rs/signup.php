@@ -1,5 +1,6 @@
 <?php
     $error_message = ""; // Initialize error message variable
+    $error_message = $_GET['error'] ?? "";
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $name = ucwords(strtolower(trim($_POST['name'])));
@@ -134,7 +135,7 @@
                 <input type="text" id="phone" name="phone" placeholder="Exp: 0123456789" required
                     value="<?php echo htmlspecialchars($_POST['phone'] ?? ''); ?>">
                     
-                <button type="button" id="getCodeButton">Get Code</button>
+                <button type="button" id="getCodeButton">Send code via WhatsApp</button>
                 <label for="verification_code">Verification Code:</label>
                 <input type="text" id="verification_code" name="verification_code" required
                     value="<?php echo htmlspecialchars($_POST['verification_code'] ?? ''); ?>">
@@ -145,6 +146,8 @@
                 <label for="confirm_password">Confirm Password:</label>
                 <input type="password" id="confirm_password" name="confirm_password" required>
                 
+                <label><input type="checkbox" id="showPasswordAll" onclick="toggleAllPasswords()"> Show Password</label>
+
                 <label>
                     <input type="checkbox" name="agree" required>
                     By proceeding, I agree with the <a href="terms_and_conditions.php" target="_blank">Terms and Conditions</a>.

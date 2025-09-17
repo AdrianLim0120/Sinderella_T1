@@ -34,3 +34,12 @@ document.getElementById('getCodeButton').addEventListener('click', function() {
     };
     xhr.send('phone=' + phone);
 });
+
+function toggleAllPasswords() {
+    var show = document.getElementById('showPasswordAll').checked;
+    var fields = ['password', 'confirm_password'];
+    fields.forEach(function(id) {
+        var field = document.getElementById(id);
+        if (field) field.type = show ? 'text' : 'password';
+    });
+}

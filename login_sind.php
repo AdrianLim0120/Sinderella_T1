@@ -4,14 +4,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $phone = $_POST['phone'];
     $password = $_POST['password'];
 
-    // Database connection
-    require_once 'db_connect.php'; //
+    require_once 'db_connect.php';
 
     if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);
     }
 
-    // Check if user exists and retrieve status
+    // Retrieve all records for this phone
     $stmt = $conn->prepare("SELECT sind_id, sind_pwd, sind_status FROM sinderellas WHERE sind_phno = ?");
     $stmt->bind_param("s", $phone);
     $stmt->execute();
@@ -19,60 +18,74 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if ($stmt->num_rows > 0) {
         $stmt->bind_result($sind_id, $hashed_password, $sind_status);
-        $stmt->fetch();
 
-        if ($sind_status === 'active' || $sind_status === 'pending') {
-            if (password_verify($password, $hashed_password)) {
-                // Correct password, set session variables and update last login date
-                $_SESSION['sind_id'] = $sind_id;
+        $found_active = false;
+        $inactive_only = true;
+        $active_record = null;
 
-                $update_stmt = $conn->prepare("UPDATE sinderellas SET last_login_date = NOW() WHERE sind_id = ?");
-                $update_stmt->bind_param("i", $sind_id);
-                $update_stmt->execute();
-                $update_stmt->close();
+        // Collect all records
+        $records = [];
+        while ($stmt->fetch()) {
+            $records[] = [
+                'sind_id' => $sind_id,
+                'sind_pwd' => $hashed_password,
+                'sind_status' => $sind_status
+            ];
+        }
+        $stmt->close();
 
-                // Fetch additional profile info for redirect logic
-                $profile_stmt = $conn->prepare("SELECT sind_phno, sind_upline_id, sind_address, sind_icno, sind_emer_name FROM sinderellas WHERE sind_id = ?");
-                $profile_stmt->bind_param("i", $sind_id);
-                $profile_stmt->execute();
-                $profile_stmt->bind_result($sind_phno, $sind_upline_id, $sind_address, $sind_icno, $sind_emer_name);
-                $profile_stmt->fetch();
-                $profile_stmt->close();
-
-                // Redirect logic
-                if ($sind_upline_id === null || $sind_upline_id === '' || $sind_upline_id === false) {
-                    header("Location: rs/select_upline.php?phone=" . urlencode($sind_phno));
-                    exit();
-                } elseif ($sind_address === null || $sind_address === '') {
-                    header("Location: rs/address_info.php?phone=" . urlencode($sind_phno));
-                    exit();
-                } elseif ($sind_icno === null || $sind_icno === '') {
-                    header("Location: rs/verify_identity.php?phone=" . urlencode($sind_phno));
-                    exit();
-                } elseif ($sind_emer_name === null || $sind_emer_name === '') {
-                    header("Location: rs/personal_info.php?phone=" . urlencode($sind_phno));
-                    exit();
-                } else {
-                    header("Location: rs/manage_profile.php");
-                    exit();
+        // Check for non-inactive record
+        foreach ($records as $record) {
+            if ($record['sind_status'] !== 'inactive') {
+                $inactive_only = false;
+                // Check password for this record
+                if (password_verify($password, $record['sind_pwd'])) {
+                    $found_active = true;
+                    $active_record = $record;
+                    break;
                 }
-            } else {
-                // Wrong password
-                $error_message = "Wrong password";
             }
-        } elseif ($sind_status === 'inactive') {
-            // Account is inactive
+        }
+
+        if ($found_active && $active_record) {
+            // Correct password, set session variables and update last login date
+            $_SESSION['sind_id'] = $active_record['sind_id'];
+
+            $update_stmt = $conn->prepare("UPDATE sinderellas SET last_login_date = NOW() WHERE sind_id = ?");
+            $update_stmt->bind_param("i", $active_record['sind_id']);
+            $update_stmt->execute();
+            $update_stmt->close();
+
+            // Fetch additional profile info for redirect logic
+            $profile_stmt = $conn->prepare("SELECT sind_phno, sind_upline_id, sind_address, sind_icno, sind_emer_name FROM sinderellas WHERE sind_id = ?");
+            $profile_stmt->bind_param("i", $active_record['sind_id']);
+            $profile_stmt->execute();
+            $profile_stmt->bind_result($sind_phno, $sind_upline_id, $sind_address, $sind_icno, $sind_emer_name);
+            $profile_stmt->fetch();
+            $profile_stmt->close();
+
+            // Redirect logic
+            if ($sind_upline_id === null || $sind_upline_id === '' || $sind_upline_id === false) {
+                header("Location: rs/select_upline.php?phone=" . urlencode($sind_phno));
+                exit();
+            } elseif ($sind_address === null || $sind_address === '') {
+                header("Location: rs/personal_info.php?phone=" . urlencode($sind_phno));
+                exit();
+            } else {
+                header("Location: rs/dashboard_main.php");
+                exit();
+            }
+        } elseif ($inactive_only) {
+            // All records are inactive
             $error_message = "Your account has been deactivated. <br>Please contact customer service for more info.";
         } else {
-            // Unknown status
-            $error_message = "Unable to log in. Please try again later.";
+            // Wrong password for active/pending account
+            $error_message = "Wrong password";
         }
     } else {
         // User not found
         $error_message = "User not found";
     }
-
-    $stmt->close();
     // $conn->close();
 }
 ?>

@@ -16,10 +16,10 @@ if (isset($_POST['save_family'])) {
 }
 
 // Fetch main profile info
-$stmt = $conn->prepare("SELECT sind_name, sind_phno, sind_address, sind_postcode, sind_area, sind_state, sind_profile_path, sind_upline_id, sind_icno, sind_dob, sind_gender, sind_race, sind_emer_name, sind_emer_phno, sind_marital_status, sind_no_kids, sind_spouse_name, sind_spouse_phno, sind_spouse_ic_no, sind_spouse_occupation, sind_bank_name, sind_bank_acc_no, sind_status, acc_approved FROM sinderellas WHERE sind_id = ?");
+$stmt = $conn->prepare("SELECT sind_name, sind_phno, sind_address, sind_postcode, sind_area, sind_state, sind_profile_path, sind_upline_id, sind_id_type, sind_icno, sind_dob, sind_gender, sind_race, sind_emer_name, sind_emer_phno, sind_marital_status, sind_no_kids, sind_spouse_name, sind_spouse_phno, sind_spouse_ic_no, sind_spouse_occupation, sind_bank_name, sind_bank_acc_no, sind_status, acc_approved FROM sinderellas WHERE sind_id = ?");
 $stmt->bind_param("i", $sind_id);
 $stmt->execute();
-$stmt->bind_result($sind_name, $sind_phno, $sind_address, $sind_postcode, $sind_area, $sind_state, $sind_profile_path, $sind_upline_id, $sind_icno, $sind_dob, $sind_gender, $sind_race, $sind_emer_name, $sind_emer_phno, $sind_marital_status, $no_kids, $spouse_name, $spouse_phno, $spouse_ic_no, $spouse_occupation, $bank_name, $bank_acc_no, $sind_status, $acc_approved);
+$stmt->bind_result($sind_name, $sind_phno, $sind_address, $sind_postcode, $sind_area, $sind_state, $sind_profile_path, $sind_upline_id, $sind_id_type, $sind_icno, $sind_dob, $sind_gender, $sind_race, $sind_emer_name, $sind_emer_phno, $sind_marital_status, $no_kids, $spouse_name, $spouse_phno, $spouse_ic_no, $spouse_occupation, $bank_name, $bank_acc_no, $sind_status, $acc_approved);
 $stmt->fetch();
 $stmt->close();
 
@@ -319,6 +319,16 @@ if ($acc_approved == 'pending' && $sind_status == 'active') {
                         <button type="button" onclick="location.href='update_address.php'">Update Address</button>
                         <br><br>
                         <table>
+                            <tr>
+                                <td><strong>ID Type</strong></td>
+                                <td>: <?php if ($sind_id_type == 'NI') {
+                                    echo 'Malaysia IC';
+                                } elseif ($sind_id_type == 'PP') {
+                                    echo 'Passport';
+                                } else {
+                                    echo 'Unknown';
+                                } ?></td>
+                            </tr>
                             <tr>
                                 <td><strong>IC No</strong></td>
                                 <td>: <?php echo htmlspecialchars($sind_icno); ?></td>

@@ -35,7 +35,7 @@ foreach ($submenu_pages as $submenu_id => $pages) {
     <ul>
         <?php if ($sind_status == 'active' && $acc_approved == 'approve') { ?>
             <!-- <li><a href="view_bookings.php">View Bookings</a></li> -->
-            <li><a href="dashboard.php">Dashboard</a></li>
+            <li><a href="dashboard_main.php">Dashboard</a></li>
             <li>
                 <a href="#" id="viewBookingsMenu">Bookings <span id="viewBookingsIcon"><?php echo in_array($current_page, ['view_bookings.php']) && isset($_GET['search_status']) ? '-' : '+'; ?></span></a>
                 <ul id="viewBookingsSubMenu" style="display: <?php echo ($current_page == 'view_bookings.php') ? 'block' : 'none'; ?>;">

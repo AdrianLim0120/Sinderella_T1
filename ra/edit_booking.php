@@ -29,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             b.booking_status, 
             b.service_id, 
             b.cust_id,
+            b.cust_address_id,
             b.booking_type, 
             s.service_name, 
             c.cust_name, 
@@ -42,9 +43,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ");
     $stmt->bind_param("i", $booking_id);
     $stmt->execute();
-    $stmt->bind_result($booking_status, $service_id, $cust_id, $booking_type, $service_name, $cust_name, $service_price, $bp_total);
+    $stmt->bind_result($booking_status, $service_id, $cust_id, $cust_address_id, $booking_type, $service_name, $cust_name, $service_price, $bp_total);
     $stmt->fetch();
     $stmt->close();
+
+    $area = $state = '';
+    if ($cust_address_id) {
+        $stmt = $conn->prepare("SELECT cust_area, cust_state FROM cust_addresses WHERE cust_address_id = ? AND cust_id = ?");
+        $stmt->bind_param("ii", $cust_address_id, $cust_id);
+        $stmt->execute();
+        $stmt->bind_result($area, $state);
+        $stmt->fetch();
+        $stmt->close();
+    }
 
     // Fetch add-on details
     $addon_details = [];
@@ -428,7 +439,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     .profile-container input[type="text"],
     .profile-container input[type="number"],
-    .profile-container select,
     .profile-container textarea {
         width: 80%;
         /* padding: 5px; */
@@ -448,6 +458,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     td {
         padding: 8px;
+    }
+    input {
+        width: 80%;
     }
 </style>
 
@@ -504,13 +517,15 @@ window.addEventListener('DOMContentLoaded', function() {
                     <tr>
                         <td><label>Sinderella</label></td>
                         <td>: 
-                            <select name="new_sind_id" required>
+                            <select name="new_sind_id" id="new_sind_id" required>
                                 <?php foreach ($sind_list as $s): ?>
                                     <option value="<?php echo $s['sind_id']; ?>" <?php if ($s['sind_id'] == $sind_id) echo 'selected'; ?>>
                                         <?php echo htmlspecialchars($s['sind_name']); ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                            <button type="button" id="searchSindBtn" style="margin-left:8px; background:none; border:none; cursor:pointer;">🔍
+                            </button>
                         </td>
                     </tr>
                     <tr>
@@ -585,6 +600,18 @@ window.addEventListener('DOMContentLoaded', function() {
                     <br><br>
                     <button onclick="submitRejectReason()" style="margin-right:10px;">Submit</button>
                     <button onclick="closeRejectModal()">Cancel</button>
+                </div>
+            </div>
+
+            <div id="sindSearchPopup" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center;">
+                <div style="background:#fff; padding:30px; border-radius:8px; min-width:320px; max-width:95vw; max-height:90vh; overflow:auto;">
+                    <h3>Available Sinderellas</h3>
+                    <p>Date: <?php echo htmlspecialchars($booking_date); ?></p>
+                    <p>Area: <?php echo htmlspecialchars($area); ?>, <?php echo htmlspecialchars($state); ?></p>
+                    <div id="sindSearchList"></div>
+                    <div style="text-align:right; margin-top:10px;">
+                        <button onclick="closeSindSearchPopup()">Close</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -785,6 +812,76 @@ function submitRejectReason() {
             window.location.reload();
         }
     });
+}
+
+function closeSindSearchPopup() {
+    document.getElementById('sindSearchPopup').style.display = 'none';
+}
+
+document.getElementById('searchSindBtn').addEventListener('click', function() {
+    // Get current booking date, area, state
+    const bookingDate = document.querySelector('[name="new_booking_date"]').value;
+    const address = document.querySelector('[name="new_full_address"]').value;
+    const area = <?php echo json_encode($area); ?>;
+    const state = <?php echo json_encode($state); ?>;
+    const custAddressId = <?php echo json_encode($cust_address_id); ?>;
+    console.log('cust_address_id:', custAddressId, 'area:', area, 'state:', state);
+
+    fetch(`../rc/get_available_sinderellas.php?date=${bookingDate}&area=${encodeURIComponent(area)}&state=${encodeURIComponent(state)}`)
+        .then(resp => resp.json())
+        .then(data => {
+            const listDiv = document.getElementById('sindSearchList');
+            if (data && data.error) {
+                listDiv.innerHTML = `<span style="color:red;">${data.error}</span>`;
+                document.getElementById('sindSearchPopup').style.display = 'flex';
+                return;
+            }
+            if (!Array.isArray(data) || data.length === 0) {
+                listDiv.innerHTML = '<span style="color:red;">No available Sinderellas found for this date.</span>';
+                document.getElementById('sindSearchPopup').style.display = 'flex';
+                return;
+            }
+            listDiv.innerHTML = '';
+            data.forEach(s => {
+                let times = '';
+                if (s.available_times && s.available_times.length > 0) {
+                    times = s.available_times.map(t => `<span style="background:#e0eaff; border-radius:6px; padding:2px 8px; margin-right:4px;">${formatTime(t)}</span>`).join(' ');
+                } else {
+                    times = '<span style="color:red;">No available time</span>';
+                }
+                const div = document.createElement('div');
+                div.className = 'sinderella-item';
+                div.style = 'display:flex;align-items:center;margin-bottom:10px;cursor:pointer;border:1px solid #ddd;padding:10px;border-radius:6px;';
+                div.innerHTML = `
+                    <img src="${s.sind_profile_full_path}" alt="${s.sind_name}" style="width:50px;height:50px;border-radius:50%;margin-right:12px;">
+                    <div>
+                        <strong>${s.sind_name}</strong><br>
+                        ${times}
+                    </div>
+                    <button style="margin-left:auto;background:#28a745;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;" onclick="selectSinderella('${s.sind_id}', '${s.sind_name}')">Select</button>
+                `;
+                listDiv.appendChild(div);
+            });
+            document.getElementById('sindSearchPopup').style.display = 'flex';
+        });
+});
+
+function selectSinderella(sindId, sindName) {
+    // Set the dropdown value and close popup
+    const dropdown = document.getElementById('new_sind_id');
+    dropdown.value = sindId;
+    closeSindSearchPopup();
+    // Optionally, show a message
+    dropdown.style.background = '#e0ffe0';
+    setTimeout(() => { dropdown.style.background = ''; }, 1200);
+}
+
+// Helper for time formatting (same as recurring_booking.php)
+function formatTime(time) {
+    const [hours, minutes] = time.split(':');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const formattedHours = hours % 12 || 12;
+    return `${formattedHours}:${minutes} ${ampm}`;
 }
 </script>
 </html>

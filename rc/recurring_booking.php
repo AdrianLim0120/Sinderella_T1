@@ -70,6 +70,14 @@ while ($row = $services_result->fetch_assoc()) $services[] = $row;
         .sinderella-container { margin-top: 10px; }
         .sinderella-item { border: 1px solid #ddd; padding: 10px; border-radius: 5px; margin-top: 10px; display: flex; align-items: center; }
         .sinderella-item img { width: 60px; height: 60px; border-radius: 50%; margin-right: 15px; }
+        select {
+            width: 300px;
+            padding: 5px;
+            margin-right: 10px;
+            min-width: 300px;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
@@ -83,7 +91,7 @@ while ($row = $services_result->fetch_assoc()) $services[] = $row;
             <input type="hidden" id="block_count" name="block_count" value="<?php echo $block_count; ?>">
             <input type="hidden" id="cust_address_id" name="cust_address_id" value="">
             <div style="margin-bottom:20px;">
-                <label><strong>Select Address:</strong></label>
+                <label><strong>Select Address:</strong></label><br>
                 <select id="address" name="address" required>
                     <option value="">-- Select Address --</option>
                     <?php foreach ($addresses as $addr): 
@@ -98,9 +106,10 @@ while ($row = $services_result->fetch_assoc()) $services[] = $row;
                         </option>
                     <?php endforeach; ?>
                 </select>
+                <span id="addressSizer" style="visibility:hidden;position:absolute;white-space:pre;font-family:inherit;font-size:inherit;"></span>
             </div>
             <div style="margin-bottom:20px;">
-                <label><strong>Select Service:</strong></label>
+                <label><strong>Select Service:</strong></label><br>
                 <select id="service" name="service" required>
                     <?php foreach ($services as $service): 
                         $aa = number_format($service['service_price'], 2);
@@ -174,7 +183,7 @@ function renderBookingBlocks() {
             <label for="date_${i}"><strong>Select Date:</strong></label>
             <input type="date" id="date_${i}" name="date_${i}" value="${bookingData[i]?.date ? bookingData[i].date : ''}">
             <div class="sinderella-container">
-                <h3 id="sinderellaTitle_${i}">Available Sinderellas</h3>
+                <h3 id="sinderellaTitle_${i}">Please select address and date.</h3>
                 <div id="sinderellaList_${i}"></div>
             </div>
             <div class="addon-container">
@@ -283,7 +292,8 @@ function loadSinderellas(idx, callback) {
     let date = dateInput.value;
     if (!date || !area || !state) {
         sinderellaList.innerHTML = '';
-        sinderellaTitle.textContent = 'Available Sinderellas';
+        sinderellaTitle.textContent = 'Please select address and date.';
+        sinderellaTitle.style.color = 'red';
         return;
     }
     fetch(`get_available_sinderellas.php?date=${date}&area=${encodeURIComponent(area)}&state=${encodeURIComponent(state)}`)
@@ -292,10 +302,11 @@ function loadSinderellas(idx, callback) {
             sinderellaCache[idx] = data; // cache for summary
             sinderellaList.innerHTML = '';
             if (data.length === 0) {
-                sinderellaTitle.textContent = `No Sinderellas available on ${date} in ${area}, ${state}`;
+                sinderellaTitle.innerHTML = `<span style="color:red;">No Sinderellas available on ${date} in ${area}, ${state}</span>`;
                 return;
             }
             sinderellaTitle.textContent = `Sinderellas available on ${date} in ${area}, ${state}`;
+            sinderellaTitle.style.color = 'green';
             data.forEach(s => {
                 const div = document.createElement('div');
                 div.className = 'sinderella-item';
@@ -336,6 +347,10 @@ function loadSinderellas(idx, callback) {
                     </div>
                 `;
                 sinderellaList.appendChild(div);
+
+                const instruction = document.createElement('div');
+                instruction.innerHTML = '<br><span style="color:red;font-style:italic;">* Please select one time slot from one Sinderella above.</span>';
+                sinderellaList.appendChild(instruction);
             });
             sinderellaList.querySelectorAll('input[type="radio"]').forEach(radio => {
                 radio.addEventListener('change', function() {
@@ -459,15 +474,25 @@ function updateSummary(idx) {
             else if (aid) addonNames.push('[Unavailable]');
         });
     }
+
+    let isComplete = dateStr && sindName && timeStr && sindName !== '[Unavailable]';
+    let statusSpan = '';
+    if (isComplete) {
+        statusSpan = '<span style="color:white; background-color:#28A745; border-radius:10px; padding:4px; margin-left:8px;">Completed</span>';
+    } else {
+        statusSpan = '<span style="color:white; background-color:red; border-radius:10px; padding:4px; margin-left:8px;">Incomplete</span>';
+    }
+
     if (dateStr || sindName || timeStr) {
         summary = '';
         if (dateStr) summary += `Date: ${dateStr}`;
         if (sindName) summary += (summary ? ', ' : '') + `Sinderella: ${sindName}`;
         if (timeStr) summary += (summary ? ', ' : '') + `Time: ${timeStr}`;
         if (addonNames.length > 0) summary += ', Add-ons: ' + addonNames.join(', ');
-        if (!summary) summary = '(Not selected)';
+        summary += statusSpan;
+        // if (!summary) summary = '<span style="color:white; background-color:red; border-radius:10px; padding:4px;">(Not selected, Please click to select)</span>';
     } else {
-        summary = '(Not selected)';
+        summary = '<span style="color:white; background-color:red; border-radius:10px; padding:4px;">(Not selected, Please click to select)</span>';
     }
     document.getElementById('summaryStatus' + idx).innerHTML = summary;
     checkAllFilled();
@@ -525,6 +550,23 @@ document.addEventListener('DOMContentLoaded', function() {
     addressSelect.addEventListener('change', function() {
         custAddressIdInput.value = addressSelect.options[addressSelect.selectedIndex].getAttribute('data-address-id');
     });
+
+    // const addressSelect = document.getElementById('address');
+    const sizer = document.getElementById('addressSizer');
+
+    function resizeSelect() {
+        const selectedOption = addressSelect.options[addressSelect.selectedIndex];
+        sizer.textContent = selectedOption ? selectedOption.text : '';
+        // Add some extra space for the dropdown arrow
+        const newWidth = sizer.offsetWidth + 40;
+        // Only grow, never shrink
+        if (addressSelect.offsetWidth < newWidth) {
+            addressSelect.style.width = newWidth + 'px';
+        }
+    }
+
+    addressSelect.addEventListener('change', resizeSelect);
+    resizeSelect(); // Initial sizing
 });
 </script>
 </body>

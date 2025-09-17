@@ -66,7 +66,7 @@ $services_result = $conn->query($services_query);
             margin-right: 10px;
             min-width: 300px;
             max-width: 100%;
-            box-sizing: border-box; /* Add this line */
+            box-sizing: border-box;
         }
         .booking-container button {
             margin-top: 20px;
@@ -306,12 +306,12 @@ $services_result = $conn->query($services_query);
                         sinderellaList.innerHTML = '';
 
                         if (data.length === 0) {
-                            title.textContent = `No Sinderellas available on ${selectedDate} in ${area}, ${state}`;
+                            title.innerHTML = `<span style="color:red;">No Sinderellas available on ${selectedDate} in ${area}, ${state}</span>`;
                             return;
                         }
 
-                        title.textContent = `Sinderellas available on ${selectedDate} in ${area}, ${state}`;
-                        
+                        title.innerHTML = `<span style="color:green;">Sinderellas available on ${selectedDate} in ${area}, ${state}</span>`;
+
                         data.sort((a, b) => (b.is_previous ? 1 : 0) - (a.is_previous ? 1 : 0));
                         
                         data.forEach(s => {
@@ -367,6 +367,10 @@ $services_result = $conn->query($services_query);
                             //     </div>
                             // `;
                             sinderellaList.appendChild(div);
+
+                            const instruction = document.createElement('div');
+                            instruction.innerHTML = '<br><span style="color:red;font-style:italic;">* Please select one time slot from one Sinderella above.</span>';
+                            sinderellaList.appendChild(instruction);
                         })
                         .catch(error => {
                             console.error('Error parsing JSON:', error);

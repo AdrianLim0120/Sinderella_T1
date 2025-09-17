@@ -1,0 +1,22 @@
+name: Daily WhatsApp Reminders
+
+on:
+  schedule:
+    - cron: "00 00 * * *"   # 00:00 MYT (UTC+8)
+  workflow_dispatch: {}
+
+jobs:
+  run-cron:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency: cron-whatsapp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: npm ci || npm i
+      - name: Trigger cron (browsered)
+        env:
+          CRON_URL: ${{ secrets.CRON_URL }}
+          DRYRUN: "0"
+        run: npm start

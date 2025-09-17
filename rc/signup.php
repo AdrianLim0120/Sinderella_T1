@@ -131,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <input type="text" id="phone" name="phone" placeholder="Exp: 0123456789" required
                     value="<?php echo htmlspecialchars($_POST['phone'] ?? ''); ?>">
 
-                <button type="button" id="getCodeButton">Get Code</button>
+                <button type="button" id="getCodeButton">Send code via WhatsApp</button>
                 <label for="verification_code">Verification Code:</label>
                 <input type="text" id="verification_code" name="verification_code" required
                     value="<?php echo htmlspecialchars($_POST['verification_code'] ?? ''); ?>">
@@ -149,6 +149,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 <label for="confirm_password">Confirm Password:</label>
                 <input type="password" id="confirm_password" name="confirm_password" required>
+
+                <label><input type="checkbox" id="showPasswordAll" onclick="toggleAllPasswords()"> Show Password</label>
                 
                 <button type="submit">Sign Up</button>
                 <!-- <p id="error-message"></p> -->

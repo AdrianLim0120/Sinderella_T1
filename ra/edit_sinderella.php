@@ -29,10 +29,10 @@ if (isset($_GET['success']) && $_GET['success'] == 1 && $active_tab == 'service_
 }
 
 // Fetch main profile info
-$stmt = $conn->prepare("SELECT sind_name, sind_phno, sind_address, sind_postcode, sind_area, sind_state, sind_icno, sind_dob, sind_gender, sind_emer_name, sind_emer_phno, sind_race, sind_marital_status, sind_no_kids, sind_spouse_name, sind_spouse_phno, sind_spouse_ic_no, sind_spouse_occupation, sind_status, sind_icphoto_path, sind_profile_path, sind_upline_id, acc_approved, sind_bank_name, sind_bank_acc_no FROM sinderellas WHERE sind_id = ?");
+$stmt = $conn->prepare("SELECT sind_name, sind_phno, sind_address, sind_postcode, sind_area, sind_state, sind_id_type, sind_icno, sind_dob, sind_gender, sind_emer_name, sind_emer_phno, sind_race, sind_marital_status, sind_no_kids, sind_spouse_name, sind_spouse_phno, sind_spouse_ic_no, sind_spouse_occupation, sind_status, sind_icphoto_path, sind_profile_path, sind_upline_id, acc_approved, sind_bank_name, sind_bank_acc_no FROM sinderellas WHERE sind_id = ?");
 $stmt->bind_param("i", $sind_id);
 $stmt->execute();
-$stmt->bind_result($sind_name, $sind_phno, $sind_address, $sind_postcode, $sind_area, $sind_state, $sind_icno, $sind_dob, $sind_gender, $sind_emer_name, $sind_emer_phno, $sind_race, $sind_marital_status, $no_kids, $spouse_name, $spouse_phno, $spouse_ic_no, $spouse_occupation, $sind_status, $sind_ic_photo, $sind_profile_photo, $sind_upline_id, $acc_approved, $bank_name, $bank_acc_no);
+$stmt->bind_result($sind_name, $sind_phno, $sind_address, $sind_postcode, $sind_area, $sind_state, $sind_id_type, $sind_icno, $sind_dob, $sind_gender, $sind_emer_name, $sind_emer_phno, $sind_race, $sind_marital_status, $no_kids, $spouse_name, $spouse_phno, $spouse_ic_no, $spouse_occupation, $sind_status, $sind_ic_photo, $sind_profile_photo, $sind_upline_id, $acc_approved, $bank_name, $bank_acc_no);
 $stmt->fetch();
 $stmt->close();
 
@@ -152,7 +152,10 @@ if (isset($_POST['save_personal'])) {
     $sind_postcode_new = trim($_POST['sind_postcode'] ?? '');
     $sind_area_new = capitalizeWords(trim($_POST['sind_area'] ?? ''));
     $sind_state_new = capitalizeWords(trim($_POST['sind_state'] ?? ''));
+    $sind_id_type_new = trim($_POST['sind_id_type'] ?? '');
     $sind_icno_new = trim($_POST['sind_icno'] ?? '');
+    $sind_dob_new = $_POST['sind_dob'] ?? '';
+    $sind_gender_new = ($sind_id_type_new === 'PP') ? ($_POST['sind_gender_select'] ?? '') : ($_POST['sind_gender'] ?? '');
     $sind_emer_name_new = capitalizeWords(trim($_POST['sind_emer_name'] ?? ''));
     $sind_emer_phno_new = preg_replace('/[\s-]/', '', trim($_POST['sind_emer_phno'] ?? ''));
     $race = $_POST['race'] ?? '';
@@ -164,23 +167,29 @@ if (isset($_POST['save_personal'])) {
     // IC number to DOB and gender
     $dob = '';
     $gender = '';
-    if (ctype_digit($sind_icno_new) && strlen($sind_icno_new) == 12) {
-        $year = intval(substr($sind_icno_new, 0, 2));
-        $month = intval(substr($sind_icno_new, 2, 2));
-        $day = intval(substr($sind_icno_new, 4, 2));
-        $currentYear = intval(date('y'));
-        $fullYear = ($year > $currentYear ? 1900 + $year : 2000 + $year);
-        if ($month >= 1 && $month <= 12 && $day >= 1 && $day <= 31 && checkdate($month, $day, $fullYear)) {
-            $dob = sprintf('%04d-%02d-%02d', $fullYear, $month, $day);
+    if ($sind_id_type_new === 'NI') {
+        if (ctype_digit($sind_icno_new) && strlen($sind_icno_new) == 12) {
+            $year = intval(substr($sind_icno_new, 0, 2));
+            $month = intval(substr($sind_icno_new, 2, 2));
+            $day = intval(substr($sind_icno_new, 4, 2));
+            $currentYear = intval(date('y'));
+            $fullYear = ($year > $currentYear ? 1900 + $year : 2000 + $year);
+            if ($month >= 1 && $month <= 12 && $day >= 1 && $day <= 31 && checkdate($month, $day, $fullYear)) {
+                $dob = sprintf('%04d-%02d-%02d', $fullYear, $month, $day);
+            } else {
+                $error_message = 'Invalid IC number: Date is not valid.';
+            }
+            $gender_digit = intval(substr($sind_icno_new, 11, 1));
+            $gender = ($gender_digit % 2 === 0) ? 'female' : 'male';
         } else {
-            $error_message = 'Invalid IC number: Date is not valid.';
+            $error_message = 'IC number must be a 12-digit numeric value.';
         }
-        $gender_digit = intval(substr($sind_icno_new, 11, 1));
-        $gender = ($gender_digit % 2 === 0) ? 'female' : 'male';
-    } else {
-        $error_message = 'IC number must be a 12-digit numeric value.';
     }
-
+    else if ($sind_id_type_new === 'PP') {
+        $sind_icno_new = strtoupper($sind_icno_new);
+        $dob = $sind_dob_new;
+        $gender = $sind_gender_new;
+    }
     // Use 'others' value if selected
     if ($race === 'others') {
         if (!$race_other) $error_message = "Please specify your race.";
@@ -215,8 +224,8 @@ if (isset($_POST['save_personal'])) {
     }
 
     if (!$error_message) {
-        $stmt = $conn->prepare("UPDATE sinderellas SET sind_name=?, sind_phno=?, sind_address=?, sind_postcode=?, sind_area=?, sind_state=?, sind_icno=?, sind_dob=?, sind_gender=?, sind_emer_name=?, sind_emer_phno=?, sind_race=?, sind_status=?, sind_icphoto_path=?, sind_profile_path=?, sind_upline_id=? WHERE sind_id=?");
-        $stmt->bind_param("ssssssssssssssssi", $sind_name_new, $sind_phno_new, $sind_address_new, $sind_postcode_new, $sind_area_new, $sind_state_new, $sind_icno_new, $dob, $gender, $sind_emer_name_new, $sind_emer_phno_new, $race, $sind_status_new, $target_file_ic, $target_file_profile, $selected_upline_id, $sind_id);
+        $stmt = $conn->prepare("UPDATE sinderellas SET sind_name=?, sind_phno=?, sind_address=?, sind_postcode=?, sind_area=?, sind_state=?, sind_id_type=?, sind_icno=?, sind_dob=?, sind_gender=?, sind_emer_name=?, sind_emer_phno=?, sind_race=?, sind_status=?, sind_icphoto_path=?, sind_profile_path=?, sind_upline_id=? WHERE sind_id=?");
+        $stmt->bind_param("sssssssssssssssssi", $sind_name_new, $sind_phno_new, $sind_address_new, $sind_postcode_new, $sind_area_new, $sind_state_new, $sind_id_type_new, $sind_icno_new, $dob, $gender, $sind_emer_name_new, $sind_emer_phno_new, $race, $sind_status_new, $target_file_ic, $target_file_profile, $selected_upline_id, $sind_id);
         $stmt->execute();
         $stmt->close();
 
@@ -239,6 +248,7 @@ if (isset($_POST['save_personal'])) {
         $sind_postcode = $sind_postcode_new;
         $sind_area = $sind_area_new;
         $sind_state = $sind_state_new;
+        $sind_id_type = $sind_id_type_new;
         $sind_icno = $sind_icno_new;
         $sind_dob = $dob;
         $sind_gender = $gender;
@@ -425,6 +435,7 @@ if (isset($_POST['save_bank'])) {
     }
     window.onload = function() {
         showTab('<?php echo $active_tab; ?>');
+
         var ms = document.querySelector('input[name="marital_status"]:checked');
         // if (ms && ms.value === 'others') document.getElementById('marital_status_other').style.display = 'inline';
         var msOther = document.getElementById('marital_status_other');
@@ -443,6 +454,20 @@ if (isset($_POST['save_bank'])) {
         var race = document.querySelector('input[name="race"]:checked');
         if (race && race.value === 'others') document.getElementById('race_other').style.display = 'inline';
         else document.getElementById('race_other').style.display = 'none';
+
+        // Initial toggle for IC/Passport
+        var idTypeRadio = document.querySelector('input[name="sind_id_type"]:checked');
+        if (idTypeRadio) toggleIdType(idTypeRadio.value);
+
+        // Listen for changes on IC/Passport radio
+        document.querySelectorAll('input[name="sind_id_type"]').forEach(function(radio) {
+            radio.onclick = function() { toggleIdType(this.value); };
+        });
+
+        // Gender select updates text input
+        document.getElementById('sind_gender_select').addEventListener('change', function() {
+            document.getElementById('sind_gender').value = this.value ? this.value.charAt(0).toUpperCase() + this.value.slice(1) : '';
+        });
     };
 
     const postcodeData = <?php echo file_get_contents('../data/postcode.json'); ?>;
@@ -574,8 +599,18 @@ if (isset($_POST['save_bank'])) {
                                 <td>: <input type="text" name="sind_state" id="sind_state" value="<?php echo htmlspecialchars($sind_state); ?>" readonly required></td>
                             </tr>
                             <tr>
-                                <td><label>IC Number</label></td>
-                                <td>: <input type="text" name="sind_icno" id="sind_icno" value="<?php echo htmlspecialchars($sind_icno); ?>" required oninput="fillDobGenderFromIC(this.value)"></td>
+                                <td><label>ID Type</label></td>
+                                <td>
+                                <div class="radio-group">: 
+                                    <input type="radio" name="sind_id_type" value="NI" <?php if ($sind_id_type === 'NI') echo 'checked'; ?>> NRIC
+                                    <input type="radio" name="sind_id_type" value="PP" <?php if ($sind_id_type === 'PP') echo 'checked'; ?>> Passport
+                                </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><label id="sind_icno_label">IC Number</label></td>
+                                <!-- <td>: <input type="text" name="sind_icno" id="sind_icno" value="<?php echo htmlspecialchars($sind_icno); ?>" required oninput="fillDobGenderFromIC(this.value)"></td> -->
+                                <td>: <input type="text" name="sind_icno" id="sind_icno" value="<?php echo htmlspecialchars($sind_icno); ?>" required></td>
                             </tr>
                             <tr>
                                 <td><label>Date of Birth</label></td>
@@ -583,7 +618,14 @@ if (isset($_POST['save_bank'])) {
                             </tr>
                             <tr>
                                 <td><label>Gender</label></td>
-                                <td>: <input type="text" name="sind_gender" id="sind_gender" value="<?php echo htmlspecialchars($sind_gender); ?>" readonly></td>
+                                    <td>
+                                        : <input type="text" name="sind_gender" id="sind_gender" value="<?php echo htmlspecialchars($sind_gender); ?>" readonly>
+                                        <select id="sind_gender_select" name="sind_gender_select" style="display:none;">
+                                            <option value="" disabled>Select your gender</option>
+                                            <option value="female" <?php if(($sind_gender ?? '')=='female') echo 'selected'; ?>>Female</option>
+                                            <option value="male" <?php if(($sind_gender ?? '')=='male') echo 'selected'; ?>>Male</option>
+                                        </select>
+                                    </td>
                             </tr>
                             <tr>
                                 <td><label>Race</label></td>
@@ -786,7 +828,8 @@ if (isset($_POST['save_bank'])) {
                         <?php endforeach; ?>
                     <?php endforeach; ?>
                 </ul>
-                <button type="button" onclick="openServiceAreaPopup()">Update Service Area</button>
+                <button type="button" onclick="openServiceAreaPopup()">Update Service Area</button><br>
+                <button type="button" onclick="window.location.href='manage_schedule.php?sind_id=<?php echo $sind_id; ?>'">Manage Schedule</button>
                 <div id="serviceAreaModal" style="display:none; position:fixed; top:5%; left:50%; transform:translateX(-50%); background:#fff; border:1px solid #ccc; box-shadow:0 2px 10px #0002; z-index:9999; padding:20px; max-width:90vw; max-height:90vh; overflow:auto;">
                     <h2>Update Service Area</h2>
                     <form id="updateServiceAreaForm" action="save_service_area.php?sind_id=<?php echo $sind_id; ?>" method="POST">
@@ -912,6 +955,50 @@ $(document).on('change', '.public-checkbox', function() {
 });
 
 window.selectedAreas = <?php echo json_encode($service_areas); ?>;
+
+function toggleIdType(type) {
+    const icInput = document.getElementById('sind_icno');
+    const dobInput = document.getElementById('sind_dob');
+    const genderInput = document.getElementById('sind_gender');
+    const genderSelect = document.getElementById('sind_gender_select');
+    const sindIcnoLabel = document.getElementById('sind_icno_label');
+
+    if (type === 'PP') {
+        sindIcnoLabel.textContent = 'Passport Number';
+        icInput.removeAttribute('pattern');
+        icInput.removeAttribute('maxlength');
+        dobInput.readOnly = false;
+        genderInput.style.display = 'none';
+        genderSelect.style.display = '';
+        genderSelect.required = true;
+        icInput.oninput = null;
+    } else {
+        sindIcnoLabel.textContent = 'IC Number';
+        icInput.setAttribute('pattern', '\\d{12}');
+        icInput.setAttribute('maxlength', '12');
+        dobInput.readOnly = true;
+        genderInput.style.display = '';
+        genderSelect.style.display = 'none';
+        genderSelect.required = false;
+        icInput.oninput = function() { fillDobGenderFromIC(this.value); };
+    }
+}
+
+// window.onload = function() {
+//     // Initial toggle
+//     var idTypeRadio = document.querySelector('input[name="sind_id_type"]:checked');
+//     if (idTypeRadio) toggleIdType(idTypeRadio.value);
+
+//     // Listen for changes
+//     document.querySelectorAll('input[name="sind_id_type"]').forEach(function(radio) {
+//         radio.onclick = function() { toggleIdType(this.value); };
+//     });
+
+//     // Gender select updates text input
+//     document.getElementById('sind_gender_select').addEventListener('change', function() {
+//         document.getElementById('sind_gender').value = this.value ? this.value.charAt(0).toUpperCase() + this.value.slice(1) : '';
+//     });
+// };
 </script>
 <script src="../includes/js/update_service_area.js"></script>
 </body>

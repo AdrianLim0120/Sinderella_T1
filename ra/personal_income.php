@@ -56,7 +56,7 @@ require_once '../db_connect.php';
             align-items: center;
             gap: 16px;
             margin-bottom: 16px;
-            justify-content: center;
+            justify-content: space-between; 
         }
 
         .range-wrap {
@@ -136,6 +136,25 @@ require_once '../db_connect.php';
             font-size: 16px;
         }
 
+        .export-btn {
+            display: flex;
+            margin-left: auto; 
+        }
+
+        .btn-export {
+            background-color: #76e790ff;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: 1px solid #28a745;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-export:hover {
+            background-color: #2bb148ff; 
+            border-color: #1e7e34;
+        }
     </style>
 </head>
 
@@ -152,6 +171,10 @@ require_once '../db_connect.php';
                             title="Older (previous week)"><strong>&lt;</strong></button>
                         <div id="rangeText">Loading…</div>
                         <button id="btnNext" class="btn-nav" title="Newer (next week)"><strong>&gt;</strong></button>
+                    </div>
+                    
+                    <div class="export-btn">
+                        <button id="btnExport" class="btn-export">Generate Excel</button>
                     </div>
                 </div>
 
@@ -265,6 +288,11 @@ require_once '../db_connect.php';
 
             $btnPrev.on('click', function () { weekOffset--; loadWeek(); });
             $btnNext.on('click', function () { if (weekOffset < maxOffset) { weekOffset++; loadWeek(); } });
+
+            $('#btnExport').on('click', function () {
+                var url = window.location = '../pdf_report/export_individual_income.php?week_offset=' + encodeURIComponent(weekOffset);
+                window.open(url);
+            });
 
             loadWeek();
         })(jQuery);
